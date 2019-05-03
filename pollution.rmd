@@ -1,0 +1,188 @@
+---
+title: "EEDS Pollution Data"
+author: "Bharathwaj Rajan; Marlon Cabrera Ormaza; Martin Freisehner; Tamas Birkner;""
+date: "May 3, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r }
+setwd("/home/marlon-cabrera/res/pollution")
+temp = list.files(pattern="*.csv")
+pollution.df<-read.csv(temp[1])
+pollution.df$timestamp <- as.POSIXct(pollution.df$timestamp)
+head(pollution.df)
+```
+
+
+
+
+```{r }
+library(ggplot2)
+theme_set(theme_bw())
+summary(pollution.df) 
+
+ggplot(data = pollution.df, aes(x = timestamp, y = ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Ozone concentration over 2 months") +
+  labs(x = "Date", y = "Ozone (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = particullate_matter)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Particullate matter concentration over 2 months") +
+  labs(x = "Date", y = "Particullate Matter (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = carbon_monoxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Carbon Monoxide concentration over 2 months") +
+  labs(x = "Date", y = "Carbon Monoxide (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = sulfure_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Sulfure Dioxide concentration over 2 months") +
+  labs(x = "Date", y = "Sulfure Dioxide (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = nitrogen_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Nitrogen Dioxide concentration over 2 months") +
+  labs(x = "Date", y = "Nitrogen Dioxide (μg/m3)")
+
+```
+```{r}
+
+```
+
+```{r }
+pollution.df.1w <- subset(pollution.df, timestamp > as.POSIXct('2014-08-01 00:00:00') & timestamp < as.POSIXct('2014-08-08 00:00:00'));
+summary(pollution.df.1w);
+
+ggplot(data = pollution.df.1w, aes(x = timestamp, y = ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Ozone concentration over week 1") +
+  labs(x = "Date", y = "Ozone (μg/m3)");
+
+ggplot(data = pollution.df.1w, aes(x = timestamp, y = particullate_matter)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Particullate matter over week 1") +
+  labs(x = "Date", y = "Particle matter (μg/m3)");
+
+ggplot(data = pollution.df.1w, aes(x = timestamp, y = carbon_monoxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Carbon Monoxide concentration over week 1") +
+  labs(x = "Date", y = "Carbon Monoxide (μg/m3)");
+
+ggplot(data = pollution.df.1w, aes(x = timestamp, y = sulfure_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Sulfure Dioxide concentration over week 1") +
+  labs(x = "Date", y = "Sulfure Dioxide (μg/m3)");
+
+ggplot(data = pollution.df.1w, aes(x = timestamp, y = nitrogen_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Nitrogen Dioxide concentration over week 1") +
+  labs(x = "Date", y = "Nitrogen Dioxide (μg/m3)");
+```
+
+```{r }
+pollution.df.2w <- subset(pollution.df, timestamp > as.POSIXct('2014-08-09 00:00:00') & timestamp < as.POSIXct('2014-08-16 00:00:00'))
+summary(pollution.df.2w)
+
+ggplot(data = pollution.df.2w, aes(x = timestamp, y = ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Ozone concentration over week 2") +
+  labs(x = "Date", y = "Ozone (μg/m3)");
+
+ggplot(data = pollution.df.2w, aes(x = timestamp, y = particullate_matter)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Particullate matter over week 2") +
+  labs(x = "Date", y = "Particle matter (μg/m3)");
+
+ggplot(data = pollution.df.2w, aes(x = timestamp, y = carbon_monoxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Carbon Monoxide concentration over week 2") +
+  labs(x = "Date", y = "Carbon Monoxide (μg/m3)");
+
+ggplot(data = pollution.df.2w, aes(x = timestamp, y = sulfure_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Sulfure Dioxide concentration over week 2") +
+  labs(x = "Date", y = "Sulfure Dioxide (μg/m3)");
+
+ggplot(data = pollution.df.2w, aes(x = timestamp, y = nitrogen_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Nitrogen Dioxide concentration over week 2") +
+  labs(x = "Date", y = "Nitrogen Dioxide (μg/m3)");
+
+```
+```{r}
+pollution.df.3w <- subset(pollution.df, timestamp > as.POSIXct('2014-08-17 00:00:00') & timestamp < as.POSIXct('2014-08-24 00:00:00'))
+summary(pollution.df.3w)
+
+ggplot(data = pollution.df.3w, aes(x = timestamp, y = ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Ozone concentration over week 3") +
+  labs(x = "Date", y = "Ozone (μg/m3)");
+
+ggplot(data = pollution.df.3w, aes(x = timestamp, y = particullate_matter)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Particullate matter over week 3") +
+  labs(x = "Date", y = "Particle matter (μg/m3)");
+
+ggplot(data = pollution.df.3w, aes(x = timestamp, y = carbon_monoxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Carbon Monoxide concentration over week 3") +
+  labs(x = "Date", y = "Carbon Monoxide (μg/m3)");
+
+ggplot(data = pollution.df.3w, aes(x = timestamp, y = sulfure_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Sulfure Dioxide concentration over week 3") +
+  labs(x = "Date", y = "Sulfure Dioxide (μg/m3)");
+
+ggplot(data = pollution.df.3w, aes(x = timestamp, y = nitrogen_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  scale_x_datetime(date_labels = "%a", date_breaks = "1 day") +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Nitrogen Dioxide concentration over week 3") +
+  labs(x = "Date", y = "Nitrogen Dioxide (μg/m3)");
+```
+
