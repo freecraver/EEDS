@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r }
 energy.ds.url <- "http://combed.github.io/downloads/combed.zip"
-energy.folder <- "res/energy"
+energy.folder <- "~/Downloads"
 energy.ds.zip.path <- file.path(energy.folder, "combed.zip")
 energy.ds.path <- file.path(energy.folder, "iiitd/Academic Block/Building Total Mains/0/Power.csv")
 
