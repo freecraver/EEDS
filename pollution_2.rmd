@@ -1,0 +1,252 @@
+---
+title: "EEDS Pollution Data"
+author: "Bharathwaj Rajan; Marlon Cabrera Ormaza; Martin Freisehner; Tamas Birkner;""
+date: "May 3, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r }
+setwd("/home/marlon-cabrera/res/pollution")
+temp = list.files(pattern="*.csv")
+pollution.df<-read.csv(temp[1])
+pollution.df$timestamp <- as.POSIXct(pollution.df$timestamp)
+head(pollution.df)
+```
+
+
+
+
+```{r }
+library(ggplot2)
+theme_set(theme_bw())
+summary(pollution.df) 
+
+ggplot(data = pollution.df, aes(x = timestamp, y = ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Ozone concentration over 2 months") +
+  labs(x = "Date", y = "Ozone (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = particullate_matter)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Particulate matter concentration over 2 months") +
+  labs(x = "Date", y = "Particulate Matter (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = carbon_monoxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Carbon Monoxide concentration over 2 months") +
+  labs(x = "Date", y = "Carbon Monoxide (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = sulfure_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Sulfure Dioxide concentration over 2 months") +
+  labs(x = "Date", y = "Sulfure Dioxide (μg/m3)")
+
+ggplot(data = pollution.df, aes(x = timestamp, y = nitrogen_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Nitrogen Dioxide concentration over 2 months") +
+  labs(x = "Date", y = "Nitrogen Dioxide (μg/m3)")
+
+```
+
+```{r}
+boxplot(pollution.df$ozone,main="Ozone Concentration", xlab="(μg/m3)",horizontal = TRUE, col="orange", border = "black", notch = TRUE)
+boxplot(pollution.df$particullate_matter,main="PM Concentration", xlab="(μg/m3)",horizontal = TRUE, col="orange", border = "black", notch = TRUE)
+boxplot(pollution.df$carbon_monoxide,main="CO Concentration", xlab="(μg/m3)",horizontal = TRUE, col="orange", border = "black", notch = TRUE)
+boxplot(pollution.df$sulfure_dioxide,main="SO2 Concentration", xlab="(μg/m3)",horizontal = TRUE, col="orange", border = "black", notch = TRUE)
+boxplot(pollution.df$nitrogen_dioxide,main="NO2 Concentration", xlab="(μg/m3)",horizontal = TRUE, col="orange", border = "black", notch = TRUE)
+```
+```{r}
+#The following procedure removes missing values and outliers and 
+count_ts = ts(pollution.df[, c('ozone')])
+pollution.df$clean_ozone = tsclean(count_ts)
+ggplot(data = pollution.df, aes(x = timestamp, y = clean_ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  ggtitle("Ozone concentration over 2 months(Clean)") +
+  labs(x = "Date", y = "Ozone (μg/m3)")
+
+count_ts = ts(pollution.df[, c('particullate_matter')])
+pollution.df$clean_particullate_matter = tsclean(count_ts)
+ggplot(data = pollution.df, aes(x = timestamp, y = clean_particullate_matter)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  ggtitle("PM concentration over 2 months(Clean)") +
+  labs(x = "Date", y = "PM (μg/m3)")
+
+count_ts = ts(pollution.df[, c('carbon_monoxide')])
+pollution.df$clean_carbon_monoxide = tsclean(count_ts)
+ggplot(data = pollution.df, aes(x = timestamp, y = clean_carbon_monoxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  ggtitle("CO concentration over 2 months(Clean)") +
+  labs(x = "Date", y = "CO (μg/m3)")
+
+count_ts = ts(pollution.df[, c('sulfure_dioxide')])
+pollution.df$clean_sulfure_dioxide = tsclean(count_ts)
+ggplot(data = pollution.df, aes(x = timestamp, y = clean_sulfure_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  ggtitle("SO2 concentration over 2 months(Clean)") +
+  labs(x = "Date", y = "SO2 (μg/m3)")
+
+count_ts = ts(pollution.df[, c('nitrogen_dioxide')])
+#count_ts=tsoutliers(count_ts)
+pollution.df$clean_nitrogen_dioxide = tsclean(count_ts,lambda = "auto")
+ggplot(data = pollution.df, aes(x = timestamp, y = clean_nitrogen_dioxide)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  ggtitle("NO2 concentration over 2 months(Clean)") +
+  labs(x = "Date", y = "NO2 (μg/m3)")
+
+
+```
+
+
+```{r}
+
+pollution.df$ozone_ma = ma(pollution.df$clean_ozone, order=268) # using the clean count with no outliers
+pollution.df$ozone_ma7 = ma(pollution.df$clean_ozone, order=2016)
+
+ggplot() +
+  geom_line(data = pollution.df, aes(x = timestamp, y = clean_ozone, colour = ".Series")) +
+  geom_line(data = pollution.df, aes(x = timestamp, y = ozone_ma,   colour = "Daily Moving Average"))  +
+  geom_line(data = pollution.df, aes(x = timestamp, y = ozone_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Ozone')
+
+```
+
+```{r}
+ozone_ma7 = ts(na.omit(pollution.df$ozone_ma7), frequency=2016)
+decomp = stl(ozone_ma7, s.window="periodic")
+deseasonal_ozone <- seasadj(decomp)
+plot(decomp)
+
+
+```
+
+```{r}
+adf.test(ozone_ma7, alternative = "stationary")
+```
+
+```{r}
+
+Acf(ozone_ma7, main='')
+
+Pacf(ozone_ma7, main='')
+```
+
+```{r}
+ozone_d1 = diff(deseasonal_ozone, differences = 1)
+plot(ozone_d1)
+adf.test(ozone_d1, alternative = "stationary")
+
+Acf(ozone_d1, main='ACF for Differenced Series')
+Pacf(ozone_d1, main='PACF for Differenced Series')
+```
+
+```{r}
+ozone_d2 = diff(deseasonal_ozone, differences = 2)
+plot(ozone_d2)
+adf.test(ozone_d2, alternative = "stationary")
+
+Acf(ozone_d2, main='ACF for Differenced Series')
+Pacf(ozone_d2, main='PACF for Differenced Series')
+```
+```{r}
+names(pollution.df)[8] <- "date"
+daily<-timeAverage(pollution.df,avg.time="day",start.date="2014-08-01 00:05:00", end.date="2014-10-01 00:00:00")
+```
+```{r}
+#The following procedure removes missing values and outliers and 
+count_ts = ts(daily[, c('ozone')])
+daily$clean_ozone = tsclean(count_ts)
+ggplot(data = pollution.df, aes(x = date, y = clean_ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  ggtitle("Ozone concentration over 2 months(Clean)") +
+  labs(x = "Date", y = "Ozone (μg/m3)")
+```
+
+```{r}
+daily$ozone_ma7 = ma(daily$clean_ozone, order=7)
+
+ggplot() +
+  geom_line(data = daily, aes(x = date, y = clean_ozone, colour = ".Series")) +
+  geom_line(data = daily, aes(x = date, y = ozone_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Ozone')
+```
+
+```{r}
+ozone_ma7 = ts(na.omit(daily$ozone_ma7), frequency=7)
+decomp = stl(ozone_ma7, s.window="periodic")
+deseasonal_ozone <- seasadj(decomp)
+plot(decomp)
+```
+
+```{r}
+adf.test(ozone_ma7, alternative = "stationary")
+Acf(ozone_ma7, main='')
+
+Pacf(ozone_ma7, main='')
+```
+
+```{r}
+ozone_d1 = diff(deseasonal_ozone, differences = 1)
+plot(ozone_d1)
+adf.test(ozone_d1, alternative = "stationary")
+
+Acf(ozone_d1, main='ACF for Differenced Series')
+Pacf(ozone_d1, main='PACF for Differenced Series')
+```
+
+```{r}
+ozone_d2= diff(deseasonal_ozone, differences = 2)
+plot(ozone_d2)
+adf.test(ozone_d2, alternative = "stationary")
+Pacf(ozone_d2, main='PACF for Differenced Series')
+Acf(ozone_d2, main='ACF for Differenced Series')
+```
+
+```{r}
+ozone_d3= diff(deseasonal_ozone, differences = 3)
+plot(ozone_d3)
+adf.test(ozone_d3, alternative = "stationary")
+Pacf(ozone_d3, main='PACF for Differenced Series')
+Acf(ozone_d3, main='ACF for Differenced Series')
+```
+
+```{r}
+auto.arima(deseasonal_ozone, seasonal=FALSE)
+```
+```{r}
+fit<-auto.arima(deseasonal_ozone, seasonal=FALSE)
+tsdisplay(residuals(fit), lag.max=45, main='(2,1,2) Model Residuals')
+
+```
+
+```{r}
+fcast <- forecast(fit, h=5)
+plot(fcast)
+hold <- window(ts(deseasonal_ozone), start=1)
+
+#fit_no_holdout = arima(ts(deseasonal_ozone[-c(700:725)]), order=c(2,1,2))
+
+#fcast_no_holdout <- forecast(fit_no_holdout,h=5)
+#plot(fcast_no_holdout, main=" ")
+#lines(ts(deseasonal_ozone))
+```
+
+
