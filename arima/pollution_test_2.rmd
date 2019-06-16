@@ -1,0 +1,253 @@
+---
+title: "Untitled"
+author: "EEDS"
+date: "16 de junio de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2)
+library(mice)
+library(openair)
+library(forecast)
+library(tseries)
+library(timeSeries)
+theme_set(theme_bw())
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+setwd("/home/marlon-cabrera/res/pollution")
+temp = list.files(pattern="*.csv")
+i=1
+pollution.df<-read.csv(temp[i])
+pollution.df$timestamp <- as.POSIXct(pollution.df$timestamp)
+
+count_ts = ts(pollution.df[, c('ozone')])
+pollution.df$clean_ozone = tsclean(count_ts)
+
+count_ts = ts(pollution.df[, c('particullate_matter')])
+pollution.df$clean_particullate_matter = tsclean(count_ts)
+
+count_ts = ts(pollution.df[, c('carbon_monoxide')])
+pollution.df$clean_carbon_monoxide = tsclean(count_ts)
+
+count_ts = ts(pollution.df[, c('sulfure_dioxide')])
+pollution.df$clean_sulfure_dioxide = tsclean(count_ts)
+
+count_ts = ts(pollution.df[, c('nitrogen_dioxide')])
+pollution.df$clean_nitrogen_dioxide = tsclean(count_ts,lambda = "auto")
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+pollution.df$ozone_ma = ma(pollution.df$clean_ozone, order=268) # using the clean count with no outliers
+pollution.df$ozone_ma7 = ma(pollution.df$clean_ozone, order=2016)
+
+ggplot() +
+  geom_line(data = pollution.df, aes(x = timestamp, y = clean_ozone, colour = ".Series")) +
+  geom_line(data = pollution.df, aes(x = timestamp, y = ozone_ma,   colour = "Daily Moving Average"))  +
+  geom_line(data = pollution.df, aes(x = timestamp, y = ozone_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Ozone')
+
+pollution.df$particullate_ma = ma(pollution.df$clean_particullate_matter, order=268) # using the clean count with no outliers
+pollution.df$particullate_ma7 = ma(pollution.df$clean_particullate_matter, order=2016)
+
+ggplot() +
+  geom_line(data = pollution.df, aes(x = timestamp, y = clean_particullate_matter, colour = ".Series")) +
+  geom_line(data = pollution.df, aes(x = timestamp, y = particullate_ma,   colour = "Daily Moving Average"))  +
+  geom_line(data = pollution.df, aes(x = timestamp, y = particullate_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Particullate Matter')
+
+
+pollution.df$carbon_ma = ma(pollution.df$clean_carbon_monoxide, order=268) # using the clean count with no outliers
+pollution.df$carbon_ma7 = ma(pollution.df$clean_carbon_monoxide, order=2016)
+
+ggplot() +
+  geom_line(data = pollution.df, aes(x = timestamp, y = clean_carbon_monoxide, colour = ".Series")) +
+  geom_line(data = pollution.df, aes(x = timestamp, y = carbon_ma,   colour = "Daily Moving Average"))  +
+  geom_line(data = pollution.df, aes(x = timestamp, y = carbon_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Carbon Monoxide')
+
+pollution.df$sulfur_ma = ma(pollution.df$clean_sulfure_dioxide, order=268) # using the clean count with no outliers
+pollution.df$sulfur_ma7 = ma(pollution.df$clean_sulfure_dioxide, order=2016)
+
+ggplot() +
+  geom_line(data = pollution.df, aes(x = timestamp, y = clean_sulfure_dioxide, colour = ".Series")) +
+  geom_line(data = pollution.df, aes(x = timestamp, y = sulfur_ma,   colour = "Daily Moving Average"))  +
+  geom_line(data = pollution.df, aes(x = timestamp, y = sulfur_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Sulfur Dioxide')
+
+
+pollution.df$nitrogen_ma = ma(pollution.df$clean_nitrogen_dioxide, order=268) # using the clean count with no outliers
+pollution.df$nitrogen_ma7 = ma(pollution.df$clean_nitrogen_dioxide, order=2016)
+
+ggplot() +
+  geom_line(data = pollution.df, aes(x = timestamp, y = clean_nitrogen_dioxide, colour = ".Series")) +
+  geom_line(data = pollution.df, aes(x = timestamp, y = nitrogen_ma,   colour = "Daily Moving Average"))  +
+  geom_line(data = pollution.df, aes(x = timestamp, y = nitrogen_ma7, colour = "WeeklyMoving Average"))  +
+  ylab('Nitrogen Dioxide')
+
+```
+
+```{r}
+#Here I entroduce a gap
+
+foo <- rnorm(n=17568, mean=8000, sd=6000)
+ind <- which(foo %in% sample(foo, 1000))
+
+pollution.df$clean_ozone[ind]<-NA
+pollution.df$clean_particullate_matter[ind]<-NA
+pollution.df$clean_nitrogen_dioxide[ind]<-NA
+pollution.df$clean_sulfure_dioxide[ind]<-NA
+pollution.df$clean_carbon_monoxide[ind]<-NA
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+names(pollution.df)[8] <- "date"
+daily<-timeAverage(pollution.df,avg.time="hour",data.thresh = 100,start.date="2014-08-01 00:05:00", end.date="2014-08-01 01:00:00")
+count_ts = ts(daily[, c('ozone')])
+
+#daily$clean_ozone = tsclean(count_ts)
+ozone_ma7 = ts(na.omit(pollution.df$ozone_ma7), frequency=2016)
+decomp = stl(ozone_ma7, s.window="periodic")
+deseasonal_ozone <- seasadj(decomp)
+
+ozone_ma72 = ts(na.omit(pollution.df$ozone_ma7), frequency=7)
+decomp2 = stl(ozone_ma72, s.window="periodic")
+deseasonal_ozone2 <- seasadj(decomp2)
+
+#plot(decomp)
+auto.arima(deseasonal_ozone, seasonal=FALSE)
+fit<-auto.arima(deseasonal_ozone[-c(14000:15552)], seasonal=FALSE)
+fcast <- forecast(fit, h=1552)
+
+
+plot(decomp)
+plot(fcast,main=" ")
+lines(ts(deseasonal_ozone))
+hold <- window(deseasonal_ozone2, start=1)
+
+
+
+```
+```{r}
+
+```
+
+```{r}
+#daily$clean_ozone = tsclean(count_ts)
+nitrogen_ma7 = ts(na.omit(pollution.df$nitrogen_ma7), frequency=2016)
+decomp = stl(nitrogen_ma7, s.window="periodic")
+deseasonal_nitrogen <- seasadj(decomp)
+
+nitrogen_ma72 = ts(na.omit(pollution.df$nitrogen_ma7), frequency=7)
+decomp2 = stl(nitrogen_ma72, s.window="periodic")
+deseasonal_nitrogen2 <- seasadj(decomp2)
+
+#plot(decomp)
+auto.arima(deseasonal_nitrogen, seasonal=FALSE)
+fit<-auto.arima(deseasonal_nitrogen[-c(14000:15552)], seasonal=FALSE)
+fcast <- forecast(fit, h=1552)
+
+
+plot(decomp)
+plot(fcast,main=" ")
+lines(ts(deseasonal_nitrogen))
+hold <- window(ts(deseasonal_nitrogen2), start=1)
+```
+
+
+
+```{r}
+#daily$clean_ozone = tsclean(count_ts)
+particullate_ma7 = ts(na.omit(pollution.df$particullate_ma7), frequency=2016)
+decomp = stl(particullate_ma7, s.window="periodic")
+deseasonal_particullate <- seasadj(decomp)
+
+particullate_ma72 = ts(na.omit(pollution.df$particullate_ma7), frequency=7)
+decomp2 = stl(particullate_ma72, s.window="periodic")
+deseasonal_particullate2 <- seasadj(decomp2)
+
+#plot(decomp)
+auto.arima(deseasonal_particullate, seasonal=FALSE)
+fit<-auto.arima(deseasonal_particullate[-c(14000:15552)], seasonal=FALSE)
+fcast <- forecast(fit, h=1552)
+
+
+plot(decomp)
+plot(fcast,main=" ")
+lines(ts(deseasonal_particullate))
+hold <- window(ts(deseasonal_particullate2), start=1)
+```
+
+```{r}
+pollution.df$sulfure_ma = ma(pollution.df$clean_sulfure_dioxide, order=268) # using the clean count with no outliers
+pollution.df$sulfure_ma7 = ma(pollution.df$clean_sulfure_dioxide, order=2016)
+names(pollution.df)[8] <- "date"
+daily<-timeAverage(pollution.df,avg.time="day",start.date="2014-08-01 00:05:00", end.date="2014-10-01 00:00:00")
+count_ts = ts(daily[, c('sulfure_dioxide')])
+#daily$clean_sulfure_dioxide = tsclean(count_ts)
+daily$sulfure_ma7 = ma(daily$sulfure_dioxide, order=7)
+sulfure_ma7 = ts(na.omit(daily$sulfure_ma7), frequency=7)
+decomp = stl(sulfure_ma7, s.window="periodic")
+deseasonal_sulfure <- seasadj(decomp)
+auto.arima(deseasonal_sulfure, seasonal=FALSE)
+fit<-auto.arima(deseasonal_sulfure[-c(47:56)], seasonal=FALSE)
+fcast <- forecast(fit, h=10)
+
+plot(decomp)
+plot(fcast,main=" ")
+lines(ts(deseasonal_sulfure))
+hold <- window(ts(deseasonal_sulfure), start=1)
+```
+
+
+```{r}
+pollution.df$nitrogen_ma = ma(pollution.df$clean_nitrogen_dioxide, order=268) # using the clean count with no outliers
+pollution.df$nitrogen_ma7 = ma(pollution.df$clean_nitrogen_dioxide, order=2016)
+names(pollution.df)[8] <- "date"
+daily<-timeAverage(pollution.df,avg.time="day",start.date="2014-08-01 00:05:00", end.date="2014-10-01 00:00:00")
+count_ts = ts(daily[, c('sulfure_dioxide')])
+#daily$clean_nitrogen_dioxide = tsclean(count_ts)
+daily$nitrogen_ma7 = ma(daily$nitrogen_dioxide, order=7)
+nitrogen_ma7 = ts(na.omit(daily$nitrogen_ma7), frequency=7)
+decomp = stl(nitrogen_ma7, s.window="periodic")
+deseasonal_nitrogen <- seasadj(decomp)
+auto.arima(deseasonal_nitrogen, seasonal=FALSE)
+fit<-auto.arima(deseasonal_nitrogen[-c(47:56)], seasonal=FALSE)
+fcast <- forecast(fit, h=10)
+
+plot(decomp)
+plot(fcast,main=" ")
+lines(ts(deseasonal_nitrogen))
+hold <- window(ts(deseasonal_nitrogen), start=1)
+```
+
