@@ -1,0 +1,165 @@
+---
+title: "Final_Pollution"
+author: "EEDS"
+date: "18 de junio de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+library(ggplot2)
+library(mice)
+library(openair)
+library(forecast)
+library(tseries)
+library(timeSeries)
+library(TSA)
+library(timeSeries)
+library(Metrics)
+library(MLmetrics)
+setwd("/home/marlon-cabrera/res/pollution")
+temp = list.files(pattern="*.csv")
+i=1
+pollution.df<-read.csv(temp[i])
+pollution.df$timestamp <- as.POSIXct(pollution.df$timestamp)
+
+ggplot(data = pollution.df, aes(x = timestamp, y = ozone)) +
+  geom_line(color = "#00AFBB", size = .5) +
+  stat_smooth(color = "#FC4E07", fill = "#FC4E07") +
+  ggtitle("Ozone concentration over 2 months") +
+  labs(x = "Date", y = "Ozone (μg/m3)")
+
+```
+
+
+```{r pressure, echo=FALSE}
+start_time = Sys.time()
+#Creating gaps in data
+stddev<-sd(pollution.df$ozone)
+med<-mean(pollution.df$ozone)
+
+
+
+
+
+#gap=2 #Choose this for gap of a minute
+gap=14 #choose for gap o 1 hour
+#gap=7 #choose for 30 minute gap
+#gap=288 #choose for day gap
+
+L=length(pollution.df$ozone)
+LL=floor(L-288)
+N<-L/gap
+M<-floor(N*0.8)
+P<-N-M
+
+foo <- rnorm(n=LL, mean=med, sd=stddev)
+
+ind <- which(foo %in% sample(foo, P))
+
+pollution<-pollution.df
+
+
+for (i in 1:gap){ pollution$ozone[ind+i]<-NA}
+for (j in 1:L){
+  if(is.na(pollution$ozone[j])||j>LL){
+    pollution$extracted_ozone[j]=pollution.df$ozone[j]
+  } else {
+    pollution$extracted_ozone[j]<-NA
+  }
+}
+
+```
+
+```{r}
+#Clean the time series
+
+pollution$ozone_clean<-tsclean(pollution$ozone,lambda = "auto")
+
+```
+
+```{r}
+#Find periodicity
+
+
+p=periodogram(pollution$ozone_clean)
+dd = data.frame(freq=p$freq, spec=p$spec)
+order = dd[order(-dd$spec),]
+top2 = head(order, 2)
+ 
+# display the 2 highest "power" frequencies
+top2
+
+
+# convert frequency to time periods
+time = 1/top2$f
+time
+```
+
+```{r}
+
+ts_ozone<-ts(pollution$ozone_clean[-c(LL:L)],frequency = time[2])
+stl_ozone<-stl(ts_ozone,"periodic")
+seasonal_stl_ozone   <- stl_ozone$time.series[,1]
+trend_stl_ozone     <- stl_ozone$time.series[,2]
+random_stl_ozone  <- stl_ozone$time.series[,3]
+plot(ts_ozone)
+plot(stl_ozone)
+```
+
+```{r}
+
+
+#Use auto.arima to fit model
+
+fit_non_seasonal<-auto.arima(trend_stl_ozone[-c(LL:L)],seasonal = FALSE)
+fit_seasonal<-auto.arima(seasonal_stl_ozone[-c(LL:L)],D=1)
+fit_random<-auto.arima(random_stl_ozone[-c(LL:L)],seasonal = FALSE)
+
+
+fcast_non_seasonal<- forecast(fit_non_seasonal, h=(L-LL))
+fcast_seasonal<- forecast(fit_seasonal, h=(L-LL))
+fcast_random<- forecast(fit_random, h=(L-LL))
+
+
+```
+
+```{r}
+#Forecasting series decomposition
+
+plot(fcast_seasonal)
+plot(fcast_non_seasonal)
+plot(fcast_random)
+
+
+
+new_ozone<-fcast_non_seasonal$x+fcast_random$x+fcast_seasonal$x
+
+
+new_forecast<-fcast_non_seasonal$mean+fcast_random$mean+fcast_seasonal$mean
+plot(as.ts(pollution$ozone_clean[-c(LL:L)]))
+points(pollution$extracted_ozone[-c(LL:L)],col="red",pch = ".")
+lines(new_forecast,col="blue")
+RMSE<-rmse(pollution$ozone_clean[(LL+1):L],new_forecast)
+MAPE<-mape(pollution$ozone_clean[(LL+1):L],new_forecast)
+end_time = Sys.time()
+end_time - start_time
+MAPE
+RMSE
+```
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
