@@ -12,6 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Download dataset
 
 ```{r }
+library(ggplot2)
+library(mice)
+library(openair)
+library(forecast)
+library(tseries)
+library(timeSeries)
+theme_set(theme_bw())
+
+
 energy.ds.url <- "http://combed.github.io/downloads/combed.zip"
 energy.folder <- "res/energy"
 energy.ds.zip.path <- file.path(energy.folder, "combed.zip")
@@ -76,3 +85,67 @@ ggplot(data = energy.df.1d, aes(x = timestamp, y = power)) +
   ggtitle("Power consumption over 1 day") +
   labs(x = "Date", y = "Power [kW]")
 ```
+
+```{r}
+#Creating gaps in data
+stddev<-sd(energy.df$power)
+med<-mean(energy.df$power)
+
+
+
+
+
+#gap=2 #Choose this for gap of a minute
+#gap=120 #choose for gap o 1 hour
+#gap=30 #choose for 30 minute gap
+gap=2874 #choose for day gap
+
+L=length(energy.df$power)
+LL=floor(L-2874)
+N<-L/gap
+M<-floor(N*0.8)
+P<-N-M
+
+foo <- rnorm(n=LL, mean=med, sd=stddev)
+
+ind <- which(foo %in% sample(foo, P))
+
+energy<-energy.df
+
+
+for (i in 1:gap){ energy$power[ind+i]<-NA}
+for (j in 1:L){
+  if(is.na(energy$power[j])||j>LL){
+    energy$extracted[j]=energy.df$power[j]
+  } else {
+    energy$extracted[j]<-NA
+  }
+}
+
+#Clean the time series
+
+energy$power_clean<-tsclean(energy$power,lambda = "auto")
+
+
+#Use auto.arima to fit model
+#fit_seasonal<-auto.arima(energy$power[-c(LL:L)],seasonal = TRUE)
+fit_non_seasonal<-auto.arima(energy$power_clean[-c(LL:L)],seasonal = FALSE)
+
+#Forecasting
+#fcast_seasonal<- forecast(fit_seasonal, h=(L-LL))
+fcast_non_seasonal<- forecast(fit_non_seasonal, h=(L-LL))
+
+
+```
+
+```{r}
+plot(fcast_non_seasonal)
+#lines(energy.df$power)
+points(energy$extracted,col="red",pch = ".")
+#lines(energy$power[LL:L])
+accuracy(fcast_non_seasonal)
+
+
+```
+
+
