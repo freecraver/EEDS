@@ -18,6 +18,9 @@ library(openair)
 library(forecast)
 library(tseries)
 library(timeSeries)
+library(TSA)
+library(timeSeries)
+library(Metrics)
 theme_set(theme_bw())
 
 
@@ -127,23 +130,76 @@ for (j in 1:L){
 energy$power_clean<-tsclean(energy$power,lambda = "auto")
 
 
-#Use auto.arima to fit model
-#fit_seasonal<-auto.arima(energy$power[-c(LL:L)],seasonal = TRUE)
-fit_non_seasonal<-auto.arima(energy$power_clean[-c(LL:L)],seasonal = FALSE)
+```
 
-#Forecasting
-#fcast_seasonal<- forecast(fit_seasonal, h=(L-LL))
+
+```{r}
+p=periodogram(energy$power_clean)
+dd = data.frame(freq=p$freq, spec=p$spec)
+order = dd[order(-dd$spec),]
+top2 = head(order, 2)
+ 
+# display the 2 highest "power" frequencies
+top2
+
+
+# convert frequency to time periods
+time = 1/top2$f
+time
+```
+
+
+
+```{r}
+ts_energy<-ts(energy$power_clean,frequency = 2874)
+stl_energy<-stl(ts_energy,"periodic")
+seasonal_stl_energy   <- stl_energy$time.series[,1]
+trend_stl_energy     <- stl_energy$time.series[,2]
+random_stl_energy  <- stl_energy$time.series[,3]
+plot(ts_energy)
+plot(stl_energy)
+```
+
+
+
+
+
+
+```{r}
+
+
+#Use auto.arima to fit model
+fit_non_seasonal<-auto.arima(trend_stl_energy[-c(LL:L)],seasonal = FALSE)
+fit_seasonal<-auto.arima(seasonal_stl_energy[-c(LL:L)],seasonal = TRUE)
+fit_random<-auto.arima(random_stl_energy[-c(LL:L)],seasonal = FALSE)
+
+
 fcast_non_seasonal<- forecast(fit_non_seasonal, h=(L-LL))
+fcast_seasonal<- forecast(fit_seasonal, h=(L-LL))
+fcast_random<- forecast(fit_random, h=(L-LL))
 
 
 ```
 
 ```{r}
+#Forecasting series decomposition
+
+plot(fcast_seasonal)
 plot(fcast_non_seasonal)
-#lines(energy.df$power)
-points(energy$extracted,col="red",pch = ".")
-#lines(energy$power[LL:L])
-accuracy(fcast_non_seasonal)
+plot(fcast_random)
+
+
+
+new_energy<-fcast_non_seasonal$x+fcast_random$x+fcast_seasonal$x
+
+
+new_forecast<-fcast_non_seasonal$mean+fcast_random$mean+fcast_seasonal$mean
+plot(energy$power_clean)
+points(energy$extracted[-c(LL:L)],col="red",pch = ".")
+lines(new_forecast,col="blue")
+error<-rmse(energy$power_clean[(LL+1):L],new_forecast)
+error
+
 
 
 ```
